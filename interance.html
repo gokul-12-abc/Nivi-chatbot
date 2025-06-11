@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NIVI Chat</title>
+  <style>
+    /* General Styles */
+    body {
+      margin: 0;
+      background-color: #121212;
+      font-family: 'Roboto', Arial, sans-serif;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #00d1b2;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 600px;
+      height: 80%;
+      background-color: #1e1e1e;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    .chat-output {
+      flex: 1;
+      width: 100%;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #2a2a2a;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-output::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .chat-output::-webkit-scrollbar-thumb {
+      background-color: #555;
+      border-radius: 4px;
+    }
+
+    .chat-output p {
+      margin: 0;
+      padding: 10px 15px;
+      border-radius: 10px;
+      max-width: 80%;
+      word-wrap: break-word;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .chat-output .user {
+      background-color: #00d1b2;
+      color: black;
+      align-self: flex-end;
+    }
+
+    .chat-output .response {
+      background-color: #444;
+      color: white;
+      align-self: flex-start;
+    }
+
+    .input-box {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 15px;
+      background-color: #1e1e1e;
+      border-top: 1px solid #333;
+    }
+
+    .input-box textarea {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: white;
+      font-size: 1rem;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: #2a2a2a;
+      margin-right: 10px;
+      resize: none; /* Prevent manual resizing */
+      overflow: hidden;
+      transition: background-color 0.3s ease;
+    }
+
+    .input-box textarea::placeholder {
+      color: #888;
+    }
+
+    .input-box textarea:focus {
+      background-color: #333;
+    }
+
+    .button {
+      background-color: #00d1b2;
+      color: black;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .button:hover {
+      background-color: #00b89c;
+      transform: scale(1.05);
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 10px;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>NIVI Chat</h1>
+
+  <div class="chat-container">
+    <div class="chat-output" id="chatOutput"></div>
+
+    <div class="input-box">
+      <textarea id="userInput" placeholder="Type your message..." aria-label="Type your message" rows="1"></textarea>
+      <button class="button">Send</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    NIVI is here to assist you. Responses may not always be accurate.
+  </div>
+
+  <script>
+    const textarea = document.getElementById('userInput');
+
+    // Dynamically resize the textarea
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto'; // Reset height
+      textarea.style.height = `${textarea.scrollHeight}px`; // Adjust to content
+    });
+
+    async function handleInput() {
+      const userInput = document.getElementById('userInput').value.trim();
+      const chatOutput = document.getElementById('chatOutput');
+
+      if (userInput) {
+        // Display user input
+        const userMessage = document.createElement('p');
+        userMessage.className = 'user';
+        userMessage.textContent = userInput;
+        chatOutput.appendChild(userMessage);
+
+        // Display "Typing..." message
+        const responseMessage = document.createElement('p');
+        responseMessage.className = 'response';
+        responseMessage.textContent = 'Typing...';
+        chatOutput.appendChild(responseMessage);
+
+        try {
+          // Call your backend API instead of OpenAI directly
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: userInput }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const aiResponse = await response.json();
+
+          // Update response message
+          responseMessage.textContent = aiResponse.content;
+        } catch (error) {
+          console.error('Error fetching GPT response:', error);
+          responseMessage.textContent = 'Error: Unable to fetch response.';
+        }
+
+        // Clear input field
+        document.getElementById('userInput').value = '';
+
+        // Scroll to the bottom of the chat
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+      }
+    }
+
+    // Add event listener to the "Send" button
+    document.querySelector('.button').addEventListener('click', handleInput);
+  </script>
+</body>
+</html>
